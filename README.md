@@ -1,6 +1,6 @@
 # drtracker  
 
-`drtracker` is an R script to track movement of Zebrafish larvae in 24 or 48 well assay plates from xy data and then compute track properties such as distance and speed.  
+`drtracker` is an R package to track movement of Zebrafish larvae in 24 or 48 well assay plates from xy data and then compute track properties such as distance and speed.  
 
 ## 1. Installation  
 ```r
@@ -62,7 +62,7 @@ __Fig 6.__ *Image after Erosion/Dilation.*
 
 ### 3.2 Analysing xy data using `drtracker`  
 
-The input file can be prepared in any way or generated from any application. The input file must be a tab-delimited dot (.) as decimal text file. The file must have a minimum of three columns named `x`, `y` and `slice`. Start R and load `drtracker` library.  
+The input file can be prepared in any way or generated from any application. The input file must be a tab-delimited dot (.) as decimal text file. The file must have a minimum of three columns named `x`, `y` and `slice`. Start R and load `drtracker` library. Use function `ltrack()`.  
 
 ```r
 library(drtracker)
@@ -112,7 +112,7 @@ dframe <- ltrack(choose.files(), wells=24, mm=5.4, fps=25)
 ```
 
 ### 4. Algorithm  
-The `drtracker` accepts xy coordinates for each spot along with the slice/frame number. The number of wells are defined. Every spot is allocated to one of the wells using nearest neighbour search (function `nn2` from package `RANN`). Each spot on frame 1 is assigned an id. Then, each spot is connected from one frame to the next frame. A spot is selected and the algorithm searches for a spot in the next frame in the same well using one of three approaches: *single*, *nearest* or *duplicated*. If a single spot was identified in the next frame (in same well), then *single* is assigned to the point. If more than one point was found in the next frame (same well), then the nearest point is selected and assigned *nearest*. If no point was found in the next frame (same well), then the previous point is duplicated. Once a spot is defined in the next frame, the same id is assigned to that spot. This is iterated to the end of all frames.  
+The function `ltrack` accepts xy coordinates for each spot along with the slice/frame number. The number of wells are defined. Every spot is allocated to one of the wells using nearest neighbour search (function `nn2` from package `RANN`). Each spot on frame 1 is assigned an id. Then, each spot is connected from one frame to the next frame. A spot is selected and the algorithm searches for a spot in the next frame in the same well using one of three approaches: *single*, *nearest* or *duplicated*. If a single spot was identified in the next frame (in same well), then *single* is assigned to the point. If more than one point was found in the next frame (same well), then the nearest point is selected and assigned *nearest*. If no point was found in the next frame (same well), then the previous point is duplicated. Once a spot is defined in the next frame, the same id is assigned to that spot. This is iterated to the end of all frames.  
 The total distance covered by each id is the sum of distance covered per frame. The speed is calculated as the distance moved per second. A second is defined by framerate. For example, in a 25 fps video, the distance covered every 25 frames is computed and stored. The mean value of all such stored values is the mean speed. The max value of all such stored values is the max speed.  
 
 2015 Roy M Francis | roy.m.francis@outlook.com
