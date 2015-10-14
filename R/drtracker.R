@@ -43,7 +43,7 @@
 #' and the nearest spot was chosen. 'Duplicate' means that no spot was present in the next frame
 #' and the previous spot was duplicated in next frame.\cr
 #' 'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per frame(ppf) and
-#' in mm per second (mps), max speed in pixels per sec (pps) and mm per sec (mps), duration of
+#' in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), duration of
 #' the whole sequence in frames (fr) and seconds (sec), framerate (fps) and calibration,
 #' number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage_pxsq and coverage_mmsq are added.\cr
 #' If \code{exportdata = T}, then three text files are exported: Wells, Tracks and TrackStatistics.
@@ -131,6 +131,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     fname <- sub(filenamediscard,"",basename(files[fileloop]))
     dframe <- read.delim(files[fileloop],header = T,stringsAsFactors = F)
     colnames(dframe) <- tolower(colnames(dframe))
+    if(!all(c("x","y","slice") %in% colnames(dframe))) stop("Columns 'x', 'y' or 'slice' not found in input file.\n")
     if(all(c("id","comment","frame") %in% colnames(dframe))) warning("Input file may be incorrect.\n")
     dframe <- dframe[,c("x","y","slice")]
     dframe$x <- as.integer(round(dframe$x,0))
@@ -276,12 +277,15 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
         setTxtProgressBar(pb, coverageloop)
         covwell <- covlist[[coverageloop]]
         covlisthulls[[coverageloop]] <- covwell[chull(x = covwell$x,y = covwell$y),c("x","y","well")]
-        covlistarea[[coverageloop]] <- data.frame(well=unique(covlisthulls[[coverageloop]]$well),area=round(abs(polyarea(covlisthulls[[coverageloop]]$x,covlisthulls[[coverageloop]]$y)),0),stringsAsFactors = FALSE)
+        areatemp <- round(abs(polyarea(covlisthulls[[coverageloop]]$x,covlisthulls[[coverageloop]]$y)),0)
+        covlistarea[[coverageloop]] <- data.frame(well=unique(covlisthulls[[coverageloop]]$well),
+                                        coverage_pxsq=areatemp,coverage_mmsq=round(pi*((sqrt(areatemp/pi)/mm)^2),2),
+                                        stringsAsFactors = FALSE)
       }
       close(pb)
       covdfhulls <- plyr::rbind.fill(covlisthulls)
       covdfarea <- plyr::rbind.fill(covlistarea)
-      rm(covlist,covlen,covlisthulls,covlistarea,coverageloop,pb)
+      rm(covlist,covlen,covlisthulls,covlistarea,coverageloop,areatemp,pb)
     }
 
     #---------------------------------------------------------------------------
@@ -532,8 +536,8 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
       # create track stats df
       idlist[[idloop]] <- data.frame(plate = fname,id = as.numeric(ids[idloop]),well = as.numeric(as.character(currentid$well))[idloop],
                                      dist_px = round(totdist,0),dist_mm = round(totdist/mm,2),speed_mean_ppf = round(totdist/framelen,2),
-                                     speed_mean_mps = round(((totdist/mm)/(framelen/fps)),2),speed_max_pps = round(max(secspeedpps),2),
-                                     speed_max_mps = round(max(secspeedmps),2),duration_fr = nrow(currentid),
+                                     speed_mean_mmps = round(((totdist/mm)/(framelen/fps)),2),speed_max_pps = round(max(secspeedpps),2),
+                                     speed_max_mmps = round(max(secspeedmps),2),duration_fr = nrow(currentid),
                                      duration_sec = round(nrow(currentid)/fps,0),fps = fps,mm = mm,stringsAsFactors = FALSE)
     }
     close(pb)
@@ -626,15 +630,15 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
         p <- ggplot()+
           geom_blank(data = edgedf,aes(x,y))+
           geom_rect(data = wellsdf,aes(xmin = h1,xmax = h2,ymin = v1,ymax = v2),colour = "grey90",fill = "white",size = 0.3)+
-          geom_polygon(data = covdata,aes(x = x,y = y,colour = area,fill = area,group = factor(well)),size = 0.3,alpha=0.7)+
-          geom_point(data = covdata,aes(x = x,y = y,colour = area,fill = area,group = factor(well)),size = 0.8,alpha=0.9)
+          geom_polygon(data = covdata,aes(x = x,y = y,colour = coverage_pxsq,fill = coverage_pxsq,group = factor(well)),size = 0.3,alpha=0.7)+
+          geom_point(data = covdata,aes(x = x,y = y,colour = coverage_pxsq,fill = coverage_pxsq,group = factor(well)),size = 0.8,alpha=0.9)
         #well number large center
         if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "grey20",alpha = 0.4,fontface = "bold")
         #well number small corner
         #geom_text(data = wellsdf,aes(x = labx,y = laby,label = well),size = txtsz,colour = "grey20",alpha = 0.3,fontface = "bold")+
         #distance in pixels
         p <- p +
-          geom_text(data = covwells,aes(x = x,y = laby1,label = area),size = txtsz,colour = "grey20",alpha = 0.6,fontface = "bold")+
+          geom_text(data = covwells,aes(x = x,y = laby1,label = coverage_pxsq),size = txtsz,colour = "grey20",alpha = 0.6,fontface = "bold")+
           theme_bw()+
           scale_x_continuous(expand = c(0,0)) +
           scale_y_reverse(expand = c(0,0))+
