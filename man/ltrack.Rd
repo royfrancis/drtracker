@@ -42,7 +42,7 @@ id links the spots as tracks. The comment shows the method used to link a spot.
 spot or a stray spot. 'Nearest' means there was more than one spot in the next frame
 and the nearest spot was chosen. 'Duplicate' means that no spot was present in the next frame
 and the previous spot was duplicated in next frame.\cr
-'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per frame(ppf) and
+'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per sec (pps) and
 in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), duration of
 the whole sequence in frames (fr) and seconds (sec), framerate (fps) and calibration,
 number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage_pxsq and coverage_mmsq are added.\cr

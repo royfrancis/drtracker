@@ -1,6 +1,11 @@
+drtracker 1.0.2
+===========
+* 15-Oct-2015
+* error corrected in mean speed and max speed calculation
+
 drtracker 1.0.1
 ===========
-* completed 14-Oct-2015
+* 14-Oct-2015
 * argument coverage added
 * argument follow added
 

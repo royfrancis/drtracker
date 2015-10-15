@@ -1,7 +1,7 @@
 Package: drtracker
 Type: Package
 Title: Track zebrafish larvae in assay plates
-Version: 1.0.1
+Version: 1.0.2
 Date: 2015-Oct-14
 Author: Roy Mathew Francis
 Authors@R: person("Roy", "Francis", email = "roy.m.francis@outlook.com",role = c("aut", "cre"))

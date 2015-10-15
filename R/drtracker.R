@@ -1,6 +1,6 @@
 # LARVAE TRACKING AND DISTANCE CALCULATION
-# v1.0.0
-# 12-Oct-2015
+# v1.0.2
+# 15-Oct-2015
 
 # Assumptions
 # 24 or 48 well plate
@@ -42,7 +42,7 @@
 #' spot or a stray spot. 'Nearest' means there was more than one spot in the next frame
 #' and the nearest spot was chosen. 'Duplicate' means that no spot was present in the next frame
 #' and the previous spot was duplicated in next frame.\cr
-#' 'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per frame(ppf) and
+#' 'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per sec (pps) and
 #' in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), duration of
 #' the whole sequence in frames (fr) and seconds (sec), framerate (fps) and calibration,
 #' number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage_pxsq and coverage_mmsq are added.\cr
@@ -518,9 +518,9 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
         if(k == (fps+1))
         {
           # save speed pps
-          secspeedpps <- c(secspeedpps,secspeed)
+          secspeedpps <- c(secspeedpps,sum(secspeed))
           # save speed mps
-          secspeedmps <- c(secspeedmps,(secspeed/mm))
+          secspeedmps <- c(secspeedmps,(sum(secspeed)/mm))
           secspeed <- vector(length = fps)
           k <- 1
         }
@@ -535,8 +535,8 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
       totdist <- sum(distancevector)
       # create track stats df
       idlist[[idloop]] <- data.frame(plate = fname,id = as.numeric(ids[idloop]),well = as.numeric(as.character(currentid$well))[idloop],
-                                     dist_px = round(totdist,0),dist_mm = round(totdist/mm,2),speed_mean_ppf = round(totdist/framelen,2),
-                                     speed_mean_mmps = round(((totdist/mm)/(framelen/fps)),2),speed_max_pps = round(max(secspeedpps),2),
+                                     dist_px = round(totdist,0),dist_mm = round(totdist/mm,2),speed_mean_pps = round(mean(secspeedpps),2),
+                                     speed_mean_mmps = round(mean(secspeedmps),2),speed_max_pps = round(max(secspeedpps),2),
                                      speed_max_mmps = round(max(secspeedmps),2),duration_fr = nrow(currentid),
                                      duration_sec = round(nrow(currentid)/fps,0),fps = fps,mm = mm,stringsAsFactors = FALSE)
     }
