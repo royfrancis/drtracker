@@ -1,4 +1,4 @@
-# drtracker  
+# drtracker 1.0.2  
 
 `drtracker` is an R package to track movement of Zebrafish larvae in 24 or 48 well assay plates from xy data and then compute track properties such as distance and speed.  
 
