@@ -2,4 +2,6 @@
 
 export(ltrack)
 import(RANN)
+import(alphahull)
+import(fossil)
 import(plyr)

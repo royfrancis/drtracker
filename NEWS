@@ -1,3 +1,12 @@
+drtracker 1.0.3
+===========
+* 25-Oct-2015
+* coverage in mmsq removed
+* mst added
+* alphahull added
+* ReadMe heavily modified
+* TrackStatistics changed to Features: Spot features and track features
+
 drtracker 1.0.2
 ===========
 * 15-Oct-2015
@@ -11,5 +20,5 @@ drtracker 1.0.1
 
 drtracker 1.0.0
 ===========
-* completed 12-Oct-2015
+* 12-Oct-2015
 * the first version of `drtracker`

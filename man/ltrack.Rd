@@ -5,9 +5,9 @@
 \title{Track larval movement in 24 or 48 well assay plates.}
 \usage{
 ltrack(files = NULL, wells = 24, markededges = TRUE, fps = 25,
-  mm = 5.4, coverage = TRUE, filenamediscard = ".txt",
-  exportdata = TRUE, exportplot = TRUE, follow = "none",
-  centerwell = FALSE)
+  mm = 5.4, coverage = TRUE, msd = TRUE, alphahull = TRUE,
+  alphavalue = 4, filenamediscard = ".txt", exportdata = TRUE,
+  exportplot = TRUE, follow = "none", centerwell = FALSE)
 }
 \arguments{
 \item{files}{A character or vector of paths or filenames. See details.}
@@ -21,6 +21,12 @@ ltrack(files = NULL, wells = 24, markededges = TRUE, fps = 25,
 \item{mm}{A numeric indicating number of pixels in 1 mm.}
 
 \item{coverage}{A logical indicating if the coverge must be computed. See details.}
+
+\item{msd}{A logical indicating if the minimum spanning distance should be computed. See details.}
+
+\item{alphahull}{A logical indicating if alphahull of point cloud is to be calculated. See details.}
+
+\item{alphavalue}{A numeric indicating alpha value for alphahull. See details.}
 
 \item{filenamediscard}{A character for part of the filename to be removed.}
 
@@ -45,7 +51,8 @@ and the previous spot was duplicated in next frame.\cr
 'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per sec (pps) and
 in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), duration of
 the whole sequence in frames (fr) and seconds (sec), framerate (fps) and calibration,
-number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage_pxsq and coverage_mmsq are added.\cr
+number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage_pxsq is added.
+If \code{msd=TRUE}, then msd_px and msd_mm are added. If \code{alphahull=TRUE}, then alphahull_pxsq is added.\cr
 If \code{exportdata = T}, then three text files are exported: Wells, Tracks and TrackStatistics.
 If more than one file was selected, a Combined-TrackStatistics file is also exported.
 If \code{exportplot = T}, then three-five figures are exported: EdgeSpots (if edge spots are used),
@@ -69,6 +76,12 @@ will be used for plate alignment and plotting and will be removed from analyses.
 Area covered by each larvae in their respective well across the whole duration.
 Computed from convex hull of points. The polygon area is computed based on the
 function \code{polyarea} from package \code{pracma}.\cr
+\strong{msd}\cr
+The minimum spanning distance based on the minimum spanning network of point cloud.
+COmputed using \code{spantree} from package \code{vegan}.
+\strong{alphahull}\cr
+The alphahull of point cloud based on the alphavalue. The function \code{ahull} from
+package \code{alphahull}.
 \strong{filenamediscard}\cr
 The file name of the input file is used on plots and text files for identification.
 Part of the filename to be removed can be indicated here. '.txt' is removed by default.\cr
