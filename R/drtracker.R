@@ -1,7 +1,7 @@
 # LARVAE TRACKING AND FEATURE CALCULATION
 # Roy Mathew Francis
-# v1.0.3
-# 25-Oct-2015
+# v1.0.4
+# 27-Oct-2015
 
 # Assumptions
 # 24 or 48 well plate
@@ -12,11 +12,14 @@
 # if two positions are available, nearest is chosen.
 
 #load libraries
-#library(plyr) #rbind.fill
-#library(RANN) #nn2
+#library(plyr) #rbind.fill()
+#library(RANN) #nn2()
 #library(ggplot2)
-#library(fossil)
-#library(alphahull)
+#library(fossil) #dino.mst
+#library(alphahull) #ahull()
+#library(reshape2) #dcast()
+
+#temp <- ltrack("test1.txt",msd=F)
 
 # FUNCTION LTRACK
 #' Track larval movement in 24 or 48 well assay plates.
@@ -27,6 +30,7 @@
 #' @param markededges A logical indicating if corners of plates have been marked. See details.
 #' @param fps A numeric indicating framerate of video in number of frames per second.
 #' @param mm A numeric indicating number of pixels in 1 mm.
+#' @param activitydist A numeric indicating distance in mm after which the larvae is considered active.
 #' @param coverage A logical indicating if the coverge must be computed. See details.
 #' @param msd A logical indicating if the minimum spanning distance should be computed. See details.
 #' @param alphahull A logical indicating if alphahull of point cloud is to be calculated. See details.
@@ -37,23 +41,23 @@
 #' @param follow A character indicating if the algorithm must be followed at every step.
 #' Options are 'interactive', 'track' or 'none'. See details.
 #' @param centerwell A logical indicating if the well number must be printed at center of the well on plots.
-#' @return Returns a list containing two components; 'RawData' and 'Track statistics'.\cr
+#' @return Returns a list containing two components; 'RawData' and 'Features'.\cr
 #' The 'RawData' is a dataframe for one input file or a list for 2 or more input files.
-#' The 'RawData' contains xy coordinates, slice, well, id and comment per spot. The
-#' id links the spots as tracks. The comment shows the method used to link a spot.
+#' The 'RawData' contains xy coordinates, slice, well, id and linktype per spot. The
+#' id links the spots as tracks. The linktype shows the method used to link a spot.
 #' 'Single' means that there was only one spot in the next frame. This may be the correct
 #' spot or a stray spot. 'Nearest' means there was more than one spot in the next frame
 #' and the nearest spot was chosen. 'Duplicate' means that no spot was present in the next frame
 #' and the previous spot was duplicated in next frame.\cr
-#' 'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per sec (pps) and
-#' in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), duration of
+#' 'Features' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per sec (pps) and
+#' in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), activity (proportion of time), duration of
 #' the whole sequence in frames (fr) and seconds (sec), framerate (fps) and calibration,
 #' number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage_pxsq is added.
 #' If \code{msd=TRUE}, then msd_px and msd_mm are added. If \code{alphahull=TRUE}, then alphahull_pxsq is added.\cr
-#' If \code{exportdata = T}, then three text files are exported: Wells, Tracks and TrackStatistics.
-#' If more than one file was selected, a Combined-TrackStatistics file is also exported.
-#' If \code{exportplot = T}, then three-five figures are exported: EdgeSpots (if edge spots are used),
-#' Wells & Spots, Wells & Tracks, Coverage and Track Statistics.
+#' If \code{exportdata = T}, then two text files are exported: Tracks and Features.
+#' If more than one file was selected, a Combined-Features file is also exported.
+#' If \code{exportplot = T}, then 3-7 figures are exported: edgespots (if edge spots are used),
+#' wells & spots, wells & tracks, coverage, msd, alphahull and distance.
 #' @details
 #' The quality of tracks almost completely depends on the image thresholding and subsequent xy data.\cr
 #' \strong{files}\cr
@@ -86,8 +90,8 @@
 #' @import fossil
 #' @export
 #'
-ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.4, coverage = TRUE,
-                   msd = TRUE, alphahull = TRUE, alphavalue = 4,
+ltrack <- function(files = NULL, wells = 24, markededges = TRUE, fps = 25, mm = 5.4, activitydist = 27,
+                   coverage = TRUE,msd = TRUE, alphahull = TRUE, alphavalue = 4,
                    filenamediscard = ".txt", exportdata = TRUE, exportplot = TRUE,
                    follow = "none", centerwell = FALSE)
 {
@@ -137,6 +141,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
   #looping over selected files
   flen <- length(files)
   distspeedlist <- vector("list",length = flen)
+  fileloop=1
   for(fileloop in 1:flen)
   {
     cat(paste0("Processing file ",fileloop," of ",flen," files.\n"))
@@ -146,7 +151,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     dframe <- read.delim(files[fileloop],header = T,stringsAsFactors = F)
     colnames(dframe) <- tolower(colnames(dframe))
     if(!all(c("x","y","slice") %in% colnames(dframe))) stop("Columns 'x', 'y' or 'slice' not found in input file.\n")
-    if(all(c("id","comment","frame") %in% colnames(dframe))) warning("Input file may be incorrect.\n")
+    if(all(c("id","linktype","frame") %in% colnames(dframe))) warning("Input file may be incorrect.\n")
     dframe <- dframe[,c("x","y","slice")]
     #round all coordinates
     dframe$x <- round(dframe$x,2)
@@ -215,7 +220,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
       if(exportplot)
       {
         p <- ggplot(edgedf,aes(x,y))+
-          geom_point(shape = 1,size = 3)+
+          geom_point(shape = 1,size = 3,na.rm = TRUE)+
           ggtitle(paste0(wells," Well Plate: ",fname,"  |  ",length(edges)," EdgeSpots"))+
           theme_bw(base_size = 5)+
           theme(plot.title = element_text(lineheight = 1.2,hjust = 0,colour = "grey40",size = 5),
@@ -258,8 +263,8 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
       if(wells == 96) cent <- 2
       p <- ggplot()+
         geom_blank(data = edgedf,aes(x,y))+
-        geom_rect(data = wellsdf,aes(xmin = h1,xmax = h2,ymin = v1,ymax = v2),colour = "grey90",fill = "white",size = 0.3)+
-        geom_point(data = dframe,aes(x,y,colour = factor(well)),size = 0.3)
+        geom_rect(data = wellsdf,aes(xmin = h1,xmax = h2,ymin = v1,ymax = v2),colour = "grey90",fill = "white",size = 0.3,na.rm = TRUE)+
+        geom_point(data = dframe,aes(x,y,colour = factor(well)),size = 0.3,na.rm = TRUE)
         if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "steelblue",alpha = 0.4,fontface = "bold")
         if(!centerwell) p <- p + geom_text(data = wellsdf,aes(x = labx,y = laby,label = well),size = txtsz,colour = "steelblue",alpha = 0.4,fontface = "bold",hjust=0.5,vjust=0.5)
         p <- p + scale_x_continuous(expand = c(0,0))+
@@ -282,30 +287,33 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     if(coverage)
     {
       cat(paste0("Computing coverage...\n"))
-      covlist <- split(dframe,dframe$well)
-      covlen <- length(covlist)
-      covlisthulls <- vector("list",length=covlen)
-      covlistarea <- vector("list",length=covlen)
-      pb <- txtProgressBar(min = 0, max = covlen, style = 3)
-      for(coverageloop in 1:covlen)
+      #covlist <- split(dframe,dframe$well)
+      #covlen <- length(covlist)
+      covlisthulls <- vector("list",length=wells)
+      covlistarea <- vector("list",length=wells)
+      pb <- txtProgressBar(min = 0, max = wells, style = 3)
+      coverageloop = 1
+      for(coverageloop in 1:wells)
       {
         setTxtProgressBar(pb, coverageloop)
-        covwell <- covlist[[coverageloop]][,c("x","y","well")]
-        if(nrow(covwell) > 2)
+        covwell <- subset(dframe,dframe$well == coverageloop)[,c("x","y","well")]
+        #covwell <- covlist[[coverageloop]][,c("x","y","well")]
+
+        if(nrow(covwell) > 3)
         {
           covlisthulls[[coverageloop]] <- covwell[chull(x = covwell$x,y = covwell$y),]
           areatemp <- round(abs(polyarea(covlisthulls[[coverageloop]]$x,covlisthulls[[coverageloop]]$y)),0)
           covlistarea[[coverageloop]] <- data.frame(well=coverageloop,coverage_pxsq=areatemp,stringsAsFactors = FALSE)
         }else{
           covlisthulls[[coverageloop]] <- data.frame(x=NA,y=NA,well=coverageloop,stringsAsFactors=FALSE)
-          covlistarea[[coverageloop]] <- data.frame(well=coverageloop,coverage_pxsq=0,stringsAsFactors = FALSE)
+          covlistarea[[coverageloop]] <- data.frame(well=coverageloop,coverage_pxsq=NA,stringsAsFactors = FALSE)
         }
 
       }
       close(pb)
       covdfhulls <- plyr::rbind.fill(covlisthulls)
       covdfarea <- plyr::rbind.fill(covlistarea)
-      rm(covlist,covlen,covlisthulls,covlistarea,coverageloop,areatemp,pb)
+      rm(covlisthulls,covlistarea,coverageloop,areatemp,pb)
     }
 
     #---------------------------------------------------------------------------
@@ -314,20 +322,22 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     if(msd)
     {
       cat(paste0("Computing minimum spanning tree and distance...\n"))
-      msdlist <- split(dframe,dframe$well)
-      msdlen <- length(msdlist)
-      msdvec <- vector(length=msdlen)
-      msdlinelist <- vector("list",length=msdlen)
-      pb <- txtProgressBar(min = 0, max = msdlen, style = 3)
-      for(msdloop in 1:msdlen)
+      #msdlist <- split(dframe,dframe$well)
+      #msdlen <- length(msdlist)
+      msdvec <- vector(length=wells)
+      msdlinelist <- vector("list",length=wells)
+      pb <- txtProgressBar(min = 0, max = wells, style = 3)
+      msdloop=1
+      for(msdloop in 1:wells)
       {
         setTxtProgressBar(pb, msdloop)
-        msdwell <- msdlist[[msdloop]][,c("x","y")]
+        msdwell <- subset(dframe,dframe$well == msdloop)[,c("x","y")]
+        #msdwell <- msdlist[[msdloop]][,c("x","y")]
+        #remove duplicates
+        if(nrow(msdwell)>2) msdwell <- msdwell[-which(duplicated(round(msdwell,1))),]
 
         if(nrow(msdwell) > 2)
         {
-          # remove duplicates
-          msdwell <- msdwell[-which(duplicated(round(msdwell,1))),]
           #jitter
           msdwell$x <- jitter(msdwell$x,0.1,0.1)
           msdwell$y <- jitter(msdwell$y,0.1,0.1)
@@ -347,13 +357,13 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
           msdvec[msdloop] <- sum(msdobj3$msd_px)
         }else{
           msdvec[msdloop] <- 0
-          msdlinelist[[msdloop]] <- data.frame(x0=0,y0=0,x1=0,y1=0,well=msdloop,msd_px=0,stringsAsFactors=FALSE)
+          msdlinelist[[msdloop]] <- data.frame(x0=NA,y0=NA,x1=NA,y1=NA,well=msdloop,msd_px=NA,stringsAsFactors=FALSE)
         }
 
       }
       close(pb)
       msddf <- plyr::rbind.fill(msdlinelist)
-      rm(msdlist,msdlen,msdlinelist,msdwell,msdloop,pb)
+      rm(msdlinelist,msdwell,msdloop,pb)
 
       if(exportplot)
       {
@@ -362,7 +372,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
           #geom_rect(data = wellsdf,aes(xmin = h1,xmax = h2,ymin = v1,ymax = v2),colour = "grey90",fill = "white",size = 0.3)+
           #geom_point(data = dframe,aes(x,y,colour=factor(well)),size = 0.3)+
           #geom_path(data = msddf, aes(x,y,group = well,colour=factor(well)), size=0.2)+
-          geom_segment(data=msddf,aes(x=x0,xend=x1,y=y0,yend=y1,group=well,colour=factor(well)),size=0.2)
+          geom_segment(data=msddf,aes(x=x0,xend=x1,y=y0,yend=y1,group=well,colour=factor(well)),size=0.2,na.rm = TRUE)
         if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "steelblue",alpha = 0.4,fontface = "bold")
         if(!centerwell) p <- p + geom_text(data = wellsdf,aes(x = labx,y = laby,label = well),size = txtsz,colour = "steelblue",alpha = 0.4,fontface = "bold",hjust=0.5,vjust=0.5)
         p <- p + scale_x_continuous(expand = c(0,0))+
@@ -386,15 +396,16 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     if(alphahull)
     {
       cat(paste0("Computing alphahull...\n"))
-      ahlist <- split(dframe,dframe$well)
-      ahlen <- length(ahlist)
-      ahvec <- vector(length=ahlen)
-      ahverlist <- vector("list",length=ahlen)
-      pb <- txtProgressBar(min = 0, max = ahlen, style = 3)
-      for(ahloop in 1:ahlen)
+      #ahlist <- split(dframe,dframe$well)
+      #ahlen <- length(ahlist)
+      ahvec <- vector(length=wells)
+      ahverlist <- vector("list",length=wells)
+      pb <- txtProgressBar(min = 0, max = wells, style = 3)
+      for(ahloop in 1:wells)
       {
         setTxtProgressBar(pb, ahloop)
-        ahwell <- ahlist[[ahloop]][,c("x","y")]
+        #ahwell <- ahlist[[ahloop]][,c("x","y")]
+        ahwell <- subset(dframe,dframe$well == ahloop)[,c("x","y")]
 
         if(nrow(ahwell) > 3)
         {
@@ -413,31 +424,31 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
           }
 
           ah1 <- alphahull::ahull(x=ahwell$x,ahwell$y,alpha=alphavalue)
-          ahvec[ahloop] <- areaahull(ah1)
+          ahvec[ahloop] <- alphahull::areaahull(ah1)
           ahverlist[[ahloop]] <- as.data.frame(ah1$ashape.obj$edges)[,c("x1","y1","x2","y2")]
           ahverlist[[ahloop]]$well <- rep(ahloop,nrow(ahverlist[[ahloop]]))
           #segments(x0 = t1$x1,y0 = t1$y1,x1 = t1$x2,y1=t1$y2,col="red")
         }else{
-          ahvec[ahloop] <- 0
-          ahverlist[[ahloop]] <- data.frame(x1=0, y1=0, x2=0, y2=0, well=ahloop, stringsAsFactors = FALSE)
+          ahvec[ahloop] <- NA
+          ahverlist[[ahloop]] <- data.frame(x1=NA, y1=NA, x2=NA, y2=NA, well=ahloop, stringsAsFactors = FALSE)
         }
       }
       close(pb)
       ahdf <- plyr::rbind.fill(ahverlist)
-      rm(ahlist,ahlen,ahverlist,ahwell,ahloop,pb)
+      rm(ahverlist,ahwell,ahloop,pb)
 
       if(exportplot)
       {
         p <- ggplot()+
           geom_blank(data = edgedf,aes(x,y))+
-          geom_point(data = dframe,aes(x,y),colour="lightgrey",size = 0.25,alpha=0.7)+
-          geom_segment(data=ahdf,aes(x=x1,xend=x2,y=y1,yend=y2,colour=factor(well)),size=0.2)
+          geom_point(data = dframe,aes(x,y),colour="lightgrey",size = 0.25,alpha=0.7,na.rm = TRUE)+
+          geom_segment(data=ahdf,aes(x=x1,xend=x2,y=y1,yend=y2,colour=factor(well)),size=0.2,na.rm = TRUE)
         if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "steelblue",alpha = 0.4,fontface = "bold")
         if(!centerwell) p <- p + geom_text(data = wellsdf,aes(x = labx,y = laby,label = well),size = txtsz,colour = "steelblue",alpha = 0.4,fontface = "bold",hjust=0.5,vjust=0.5)
         p <- p + scale_x_continuous(expand = c(0,0))+
           scale_y_reverse(expand = c(0,0))+
           theme_bw(base_size = 5)+
-          labs(title = paste0(wells, " Well Plate: ",fname,"  |  Alpha Hulls at Alpha ",alphavalue))+
+          labs(title = paste0(wells, " Well Plate: ",fname,"  |  Alpha Hulls at alpha ",alphavalue))+
           coord_fixed()+
           theme(plot.title = element_text(lineheight = 1.2,hjust = 0,colour = "grey40",size = 5),legend.position = "none",
                 axis.title = element_blank(),axis.ticks = element_blank(),axis.text = element_blank(),
@@ -461,6 +472,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     dflist <- vector("list",length = length(framelist))
     numberofpoints <- length(framelist)
     pb <- txtProgressBar(min = 0, max = numberofpoints, style = 3)
+    frameloop=1
     for(frameloop in 1:numberofpoints)
     {
       setTxtProgressBar(pb, frameloop)
@@ -497,7 +509,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
           {
             foundpointpos <- foundpointtemp
             foundpointpos$id <- searchpointpos$id
-            foundpointpos$comment <- "Single"
+            foundpointpos$linktype <- "Single"
           }
 
           #if more than one point was found
@@ -507,7 +519,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
             {
               foundpointpos <- foundpointtemp[as.numeric(RANN::nn2(foundpointtemp[,c("x","y")],searchpointpos[,c("x","y")],k = 1)$nn.idx),]
               foundpointpos$id <- searchpointpos$id
-              foundpointpos$comment <- "Nearest"
+              foundpointpos$linktype <- "Nearest"
             }
           }
 
@@ -515,7 +527,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
           # if no match was found, duplicate point in next frame
           foundpointpos <- searchpointpos
           foundpointpos$slice <- frameloop
-          foundpointpos$comment <- "Duplicated"
+          foundpointpos$linktype <- "Duplicated"
         }
 
         # add new pos to xylist
@@ -533,11 +545,11 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
         #         legend(x = 470,y=480,legend = c("Current frame","Next frame"),col = c("black","#3182bdB3"),pch = c(3,16),ncol = 2,bty = "n",xpd = T)
         pframe <- rbind(currentframe[,c("x","y","slice","id")],tempdf[,c("x","y","slice","id")])
         pframe$frame <- c(rep(currentframe$slice[1],nrow(currentframe)),rep(currentframe$slice[1]+1,nrow(tempdf)))
-        #pframe$comment <- factor(c(rep("None",nrow(currentframe)),as.character(tempdf$comment)),levels=c("None","Single","Nearest","Duplicated"))
+        #pframe$linktype <- factor(c(rep("None",nrow(currentframe)),as.character(tempdf$linktype)),levels=c("None","Single","Nearest","Duplicated"))
         p <- ggplot()+
-          geom_point(data=pframe,aes(x=x,y=y,shape=factor(frame),col=factor(frame)),size=6,alpha=0.6)+
-          geom_line(data=pframe,aes(x=x,y=y,group=factor(id)),linetype=2)+
-          geom_text(data=currentframe,aes(x=x+20,y=y,label=id),size=3)+
+          geom_point(data=pframe,aes(x=x,y=y,shape=factor(frame),col=factor(frame)),size=6,alpha=0.6,na.rm = TRUE)+
+          geom_line(data=pframe,aes(x=x,y=y,group=factor(id)),linetype=2,na.rm = TRUE)+
+          geom_text(data=currentframe,aes(x=x+20,y=y,label=id),size=3,na.rm = TRUE)+
           scale_shape_manual(values=c(7,15,8,9))+
           scale_fill_manual(values=c("coral","steelblue","darkolivegreen3"))+
           ggtitle(paste0("Current Frame: ",frameloop))+
@@ -587,76 +599,101 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     #---------------------------------------------------------------------------
 
     #Distance and speed calculations
-    cat(paste0("Computing distance and speed...\n"))
-    ids <- as.numeric(levels(factor(df1$id)))
-    idlen <- length(ids)
-    pb <- txtProgressBar(min = 0, max = idlen, style = 3)
-    idlist <- vector("list",length = idlen)
+    cat(paste0("Computing distance, speed and activity...\n"))
+    ##ids <- as.numeric(levels(factor(df1$id)))
+    #idlen <- length(ids)
+    pb <- txtProgressBar(min = 0, max = wells, style = 3)
+    welllist <- vector("list",length = wells)
+    secspeedppslist <- vector("list",length=wells)
     #loop over id
-    for(idloop in 1:idlen)
+    loop1=1
+    for(loop1 in 1:wells)
     {
-      setTxtProgressBar(pb, idloop)
-      currentid <- subset(df1, id == ids[idloop])
-      framelen <- nrow(currentid)
-      distancevector <- vector(length = framelen)
-      idframeloop = 1
-      secspeed <- vector(length = fps)
-      secspeedpps <- vector()
-      secspeedmps <- vector()
-      k = 1
-      #loop over frames
-      while(idframeloop < framelen)
+      setTxtProgressBar(pb, loop1)
+      currentwell <- subset(df1, df1$well == loop1)
+
+      if(nrow(currentwell) > 1)
       {
-        if(k == (fps+1))
+        framelen <- nrow(currentwell)
+        distancevector <- vector(length = framelen)
+        loop2 = 1
+        secspeed <- vector(length = fps)
+        secspeedpps <- vector()
+        secspeedmps <- vector()
+        k = 1
+        #loop over frames
+        while(loop2 < framelen)
         {
-          # save speed pps
-          secspeedpps <- c(secspeedpps,sum(secspeed))
-          # save speed mps
-          secspeedmps <- c(secspeedmps,(sum(secspeed)/mm))
-          secspeed <- vector(length = fps)
-          k <- 1
+          if(k == (fps+1))
+          {
+            # save speed pps
+            secspeedpps <- c(secspeedpps,sum(secspeed))
+            # save speed mps
+            secspeedmps <- c(secspeedmps,(sum(secspeed)/mm))
+            secspeed <- vector(length = fps)
+            k <- 1
+          }
+          #calculate euclidian distance
+          d <- sqrt(diff(c(currentwell$x[loop2],currentwell$x[loop2+1]))^2 + diff(c(currentwell$y[loop2],currentwell$y[loop2+1]))^2)
+          secspeed[k] <- d
+          distancevector[loop2] <- d
+          loop2 <- loop2+1
+          k = k+1
         }
-        #calculate euclidian distance
-        d <- sqrt(diff(c(currentid$x[idframeloop],currentid$x[idframeloop+1]))^2 + diff(c(currentid$y[idframeloop],currentid$y[idframeloop+1]))^2)
-        secspeed[k] <- d
-        distancevector[idframeloop] <- d
-        idframeloop <- idframeloop+1
-        k = k+1
+        # sum total distance
+        totdist <- sum(distancevector)
+
+        #speed pps by well
+        #well1 <- as.numeric(as.character(currentwell$well))[loop1]
+        #secspeedppslist[[loop1]] <- data.frame(well=rep(well1,length(secspeedpps)),id=rep(loop1,
+        #                            length(secspeedpps)),speedpps=secspeedpps,speedmmps=secspeedmps,stringsAsFactors = FALSE)
+
+        # create track stats df
+        welllist[[loop1]] <- data.frame(plate = fname,id = as.numeric(currentwell$id[1]),well = loop1,
+                                       dist_px = round(totdist,0),dist_mm = round(totdist/mm,2),speed_mean_pps = round(mean(secspeedpps),2),
+                                       speed_mean_mmps = round(mean(secspeedmps),2),speed_max_pps = round(max(secspeedpps),2),
+                                       speed_max_mmps = round(max(secspeedmps),2),duration_fr = nrow(currentwell),
+                                       duration_sec = round(nrow(currentwell)/fps,0), activity = round(length(which(secspeedmps > activitydist))/length(secspeedmps),3),
+                                       fps = fps,mm = mm,stringsAsFactors = FALSE)
+      }else{
+        # create track stats df
+        welllist[[loop1]] <- data.frame(plate = fname,id = as.numeric(currentwell$id[1]),well = loop1,
+                                       dist_px = NA,dist_mm = NA,speed_mean_pps = NA,
+                                       speed_mean_mmps = NA,speed_max_pps = NA,
+                                       speed_max_mmps = NA,duration_fr = NA,
+                                       duration_sec = NA, activity = NA,
+                                       fps = fps,mm = mm,stringsAsFactors = FALSE)
       }
-      # sum total distance
-      totdist <- sum(distancevector)
-      # create track stats df
-      idlist[[idloop]] <- data.frame(plate = fname,id = as.numeric(ids[idloop]),well = as.numeric(as.character(currentid$well))[idloop],
-                                     dist_px = round(totdist,0),dist_mm = round(totdist/mm,2),speed_mean_pps = round(mean(secspeedpps),2),
-                                     speed_mean_mmps = round(mean(secspeedmps),2),speed_max_pps = round(max(secspeedpps),2),
-                                     speed_max_mmps = round(max(secspeedmps),2),duration_fr = nrow(currentid),
-                                     duration_sec = round(nrow(currentid)/fps,0),fps = fps,mm = mm,stringsAsFactors = FALSE)
+
+
     }
     close(pb)
-    distspeedtemp <- plyr::arrange(plyr::rbind.fill(idlist),well)
-    if(!coverage) distspeedlist[[fileloop]] <- distspeedtemp
-    if(coverage) distspeedlist[[fileloop]] <- base::merge(x = distspeedtemp,y = covdfarea, by = "well")
+    distspeedtemp <- plyr::arrange(plyr::rbind.fill(welllist),well)
+    rm(totdist,currentwell,framelen,distancevector,loop2,d,loop1,pb,secspeed,secspeedpps,secspeedmps,secspeedppslist,welllist)
 
+    #---------------------------------------------------------------------------
+    #combining data
+    #merge coverage
+    if(coverage) distspeedtemp <- base::merge(x = distspeedtemp,y = covdfarea, by = "well")
+    #merge msd
     if(msd)
     {
-      distspeedlist[[fileloop]]$msd_px <- round(msdvec,0)
-      distspeedlist[[fileloop]]$msd_mm <- round(msdvec/mm,2)
+      distspeedtemp$msd_px <- round(msdvec,0)
+      distspeedtemp$msd_mm <- round(msdvec/mm,2)
       rm(msdvec)
     }
-
+    #merge alphahull
     if(alphahull)
       {
-        distspeedlist[[fileloop]]$alphahull_pxsq <- round(ahvec,2)
+      distspeedtemp$alphahull_pxsq <- round(ahvec,2)
         rm(ahvec)
       }
 
     if(exportdata)
     {
-      write.table(x = distspeedlist[[fileloop]], file = paste0(fname,"-Features.txt"),quote = FALSE,row.names = FALSE,sep = "\t",dec = ".")
+      write.table(x = distspeedtemp, file = paste0(fname,"-Features.txt"),quote = FALSE,row.names = FALSE,sep = "\t",dec = ".")
       cat(paste0(fname,"-Features.txt exported.\n"))
     }
-
-    rm(ids,idlen,idlist,totdist,currentid,framelen,distancevector,idframeloop,d,idloop,pb,secspeed,secspeedpps,secspeedmps)
 
     #---------------------------------------------------------------------------
     #plots
@@ -666,7 +703,9 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
     {
       cat(paste0("Generating plots.\n"))
 
-      txtdf <- distspeedlist[[fileloop]][,c("id","well","dist_px")]
+      txtdf <- distspeedtemp[,c("id","well","dist_px")]
+      #move text for labelling on plot
+      txtdf$dist_px[is.na(txtdf$dist_px)] <- 0
       txtdf$dist_px[txtdf$dist_px > 0] <- round((0.90*txtdf$dist_px[txtdf$dist_px > 0]),0)
       txtdf$dist_px[txtdf$dist_px == 0] <- NA
 
@@ -676,7 +715,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
 
       # barplot distances
       p <- ggplot()+
-        geom_bar(data = distspeedlist[[fileloop]],aes(x = well,y = dist_px),stat = "identity",fill = "steelblue")+
+        geom_bar(data = distspeedtemp,aes(x = well,y = dist_px),stat = "identity",fill = "steelblue",na.rm = TRUE)+
         scale_x_continuous(expand = c(0,0),breaks = distspeedlist[[fileloop]]$well)+
         scale_y_continuous(expand = c(0,0))+
         geom_text(data = txtdf,aes(x = well,y = dist_px,label = dist_px),colour = "grey80",size = txtszbp)+
@@ -702,22 +741,23 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
       df2 <- base::merge(df1.1,txtdf,by="id",all.x=T,all.y=F)
       rm(df1.1)
       df2 <- plyr::arrange(df2,order)
+      df2$linktype <- factor(df2$linktype,levels=c("Single","Duplicated","Nearest"))
 
       # tracks plot
       p <- ggplot()+
         geom_blank(data = edgedf,aes(x,y))+
         #geom_rect(data = wellsdf,aes(xmin = h1,xmax = h2,ymin = v1,ymax = v2),colour = "grey90",fill = "white",size = 0.3)+
         #geom_point(data = df1,aes(x = x,y = y,colour = factor(id),group = factor(id)),size = 0.2)+
-        geom_path(data = df2,aes(x = x,y = y,colour = dist_px,group = factor(id)),size = 0.25)
-        #well number large center
-        if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "grey20",alpha = 0.4,fontface = "bold")
-        #well number small corner
-        #geom_text(data = wellsdf,aes(x = labx,y = laby,label = well),size = txtsz,colour = "grey20",alpha = 0.3,fontface = "bold")+
-        #distance in pixels
-        p <- p + geom_text(data = wellsdf1,aes(x = x,y = laby1,label = dist_px),size = txtsz,colour = "grey20",alpha = 0.6,fontface = "bold")+
+        geom_path(data = df2,aes(x = x,y = y,colour = linktype,group = factor(id)),size = 0.25,alpha=0.8,na.rm = TRUE)
+
+        if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "steelblue",alpha = 0.4,fontface = "bold")
+        if(!centerwell) p <- p + geom_text(data = wellsdf,aes(x = labx,y = laby,label = well),size = txtsz,colour = "steelblue",alpha = 0.4,fontface = "bold",hjust=0.5,vjust=0.5)
+
+        p <- p + geom_text(data = wellsdf1,aes(x = x,y = laby1,label = dist_px),size = txtsz,colour = "grey20",alpha = 0.6,fontface = "bold",na.rm = TRUE)+
         theme_bw()+
         scale_x_continuous(expand = c(0,0)) +
         scale_y_reverse(expand = c(0,0))+
+        scale_colour_manual(values=c("#31a354","#3182bd","#de2d26"))+
         labs(title = paste0(wells, " Well Plate: ",fname,"  |  Wells & Tracks"))+
         coord_fixed()+
         theme_bw(base_size = 5)+
@@ -734,16 +774,17 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
         covwells <- base::merge(wellsdf1,covdfarea,by = "well")
         p <- ggplot()+
           geom_blank(data = edgedf,aes(x,y))+
-          geom_rect(data = wellsdf,aes(xmin = h1,xmax = h2,ymin = v1,ymax = v2),colour = "grey90",fill = "white",size = 0.3)+
-          geom_polygon(data = covdata,aes(x = x,y = y,colour = coverage_pxsq,fill = coverage_pxsq,group = factor(well)),size = 0.3,alpha=0.7)+
-          geom_point(data = covdata,aes(x = x,y = y,colour = coverage_pxsq,fill = coverage_pxsq,group = factor(well)),size = 0.8,alpha=0.9)
+          geom_rect(data = wellsdf,aes(xmin = h1,xmax = h2,ymin = v1,ymax = v2),colour = "grey90",fill = "white",size = 0.3,na.rm = TRUE)+
+          geom_point(data = df1,aes(x,y),colour="lightgrey",size = 0.25,alpha=0.6,na.rm = TRUE)+
+          geom_polygon(data = covdata,aes(x = x,y = y,colour = coverage_pxsq,group = factor(well)),fill=NA,size = 0.3,na.rm = TRUE)+
+          geom_point(data = covdata,aes(x = x,y = y,colour = coverage_pxsq,fill = coverage_pxsq,group = factor(well)),size = 0.8,alpha=0.9,na.rm = TRUE)
         #well number large center
-        if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "grey20",alpha = 0.4,fontface = "bold")
+        if(centerwell) p <- p + geom_text(data = wellsdf,aes(x = x,y = y,label = well),size = cent,colour = "grey20",alpha = 0.4,fontface = "bold",na.rm = TRUE)
         #well number small corner
         #geom_text(data = wellsdf,aes(x = labx,y = laby,label = well),size = txtsz,colour = "grey20",alpha = 0.3,fontface = "bold")+
         #distance in pixels
         p <- p +
-          geom_text(data = covwells,aes(x = x,y = laby1,label = coverage_pxsq),size = txtsz,colour = "grey20",alpha = 0.6,fontface = "bold")+
+          geom_text(data = covwells,aes(x = x,y = laby1,label = coverage_pxsq),size = txtsz,colour = "grey20",alpha = 0.6,fontface = "bold",na.rm = TRUE)+
           theme_bw()+
           scale_x_continuous(expand = c(0,0)) +
           scale_y_reverse(expand = c(0,0))+
@@ -759,6 +800,7 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
         rm(covdata,covwells)
       }
 
+      distspeedlist[[fileloop]] <- distspeedtemp
       rm(p,wellsdf1,txtdf,df2)
     }
 
@@ -772,8 +814,8 @@ ltrack <- function(files = NULL, wells=24, markededges = TRUE, fps = 25, mm = 5.
   {
     if(flen > 1)
     {
-      write.table(x = distspeeddata, file = paste0("Combined-TrackStatistics.txt"),quote = FALSE,row.names = FALSE,sep = "\t",dec = ".")
-      cat(paste0("Combined-TrackStatistics.txt exported.\n"))
+      write.table(x = distspeeddata, file = paste0("Combined-Features.txt"),quote = FALSE,row.names = FALSE,sep = "\t",dec = ".")
+      cat(paste0("Combined-Features.txt exported.\n"))
     }
   }
   cat(paste0("Completed in ",format((Sys.time() - currtime),format="%S",digits=3),".\n"))

@@ -1,6 +1,6 @@
 Package: drtracker
-Version: 1.0.3
-Date: 2015-Oct-25
+Version: 1.0.4
+Date: 2015-Oct-27
 Title: Track zebrafish larvae in assay plates
 Description: Track the movement of single zebrafish larvae in 24 or 48 well assay plates from xy data and compute features.
 Author: Roy Mathew Francis
@@ -8,11 +8,12 @@ Authors@R: person("Roy", "Francis", email = "roy.m.francis@outlook.com",role = c
 URL: https://github.com/royfrancis/drtracker
 Depends: R(>= 3.2.0),
     Cairo,
-    ggplot2
+    ggplot2,
+    plyr
 Imports: alphahull,
-    plyr,
     fossil,
-    RANN
+    RANN,
+    reshape2
 License: GPL-3
 LazyData: true
 Encoding: UTF-8

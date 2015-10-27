@@ -5,9 +5,10 @@
 \title{Track larval movement in 24 or 48 well assay plates.}
 \usage{
 ltrack(files = NULL, wells = 24, markededges = TRUE, fps = 25,
-  mm = 5.4, coverage = TRUE, msd = TRUE, alphahull = TRUE,
-  alphavalue = 4, filenamediscard = ".txt", exportdata = TRUE,
-  exportplot = TRUE, follow = "none", centerwell = FALSE)
+  mm = 5.4, activitydist = 27, coverage = TRUE, msd = TRUE,
+  alphahull = TRUE, alphavalue = 4, filenamediscard = ".txt",
+  exportdata = TRUE, exportplot = TRUE, follow = "none",
+  centerwell = FALSE)
 }
 \arguments{
 \item{files}{A character or vector of paths or filenames. See details.}
@@ -19,6 +20,8 @@ ltrack(files = NULL, wells = 24, markededges = TRUE, fps = 25,
 \item{fps}{A numeric indicating framerate of video in number of frames per second.}
 
 \item{mm}{A numeric indicating number of pixels in 1 mm.}
+
+\item{activitydist}{A numeric indicating distance in mm after which the larvae is considered active.}
 
 \item{coverage}{A logical indicating if the coverge must be computed. See details.}
 
@@ -40,23 +43,23 @@ Options are 'interactive', 'track' or 'none'. See details.}
 \item{centerwell}{A logical indicating if the well number must be printed at center of the well on plots.}
 }
 \value{
-Returns a list containing two components; 'RawData' and 'Track statistics'.\cr
+Returns a list containing two components; 'RawData' and 'Features'.\cr
 The 'RawData' is a dataframe for one input file or a list for 2 or more input files.
-The 'RawData' contains xy coordinates, slice, well, id and comment per spot. The
-id links the spots as tracks. The comment shows the method used to link a spot.
+The 'RawData' contains xy coordinates, slice, well, id and linktype per spot. The
+id links the spots as tracks. The linktype shows the method used to link a spot.
 'Single' means that there was only one spot in the next frame. This may be the correct
 spot or a stray spot. 'Nearest' means there was more than one spot in the next frame
 and the nearest spot was chosen. 'Duplicate' means that no spot was present in the next frame
 and the previous spot was duplicated in next frame.\cr
-'Track Statistics' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per sec (pps) and
-in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), duration of
+'Features' contains plate name, id, well, total distance in pixels and mm, mean speed in pixels per sec (pps) and
+in mm per second (mmps), max speed in pixels per sec (pps) and mm per sec (mmps), activity (proportion of time), duration of
 the whole sequence in frames (fr) and seconds (sec), framerate (fps) and calibration,
 number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage_pxsq is added.
 If \code{msd=TRUE}, then msd_px and msd_mm are added. If \code{alphahull=TRUE}, then alphahull_pxsq is added.\cr
-If \code{exportdata = T}, then three text files are exported: Wells, Tracks and TrackStatistics.
-If more than one file was selected, a Combined-TrackStatistics file is also exported.
-If \code{exportplot = T}, then three-five figures are exported: EdgeSpots (if edge spots are used),
-Wells & Spots, Wells & Tracks, Coverage and Track Statistics.
+If \code{exportdata = T}, then two text files are exported: Tracks and Features.
+If more than one file was selected, a Combined-Features file is also exported.
+If \code{exportplot = T}, then 3-7 figures are exported: edgespots (if edge spots are used),
+wells & spots, wells & tracks, coverage, msd, alphahull and distance.
 }
 \description{
 Tracks single larvae in 24 or 48 well assay plates from xy spot data
