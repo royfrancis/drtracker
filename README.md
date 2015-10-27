@@ -108,10 +108,10 @@ __Fig 7.__ *Features computed by `drtracker` shown for a single well. (A) shows 
 
 The spots are assigned to wells and the plate layout with well numbers and spots are exported as an image if `exportplot=TRUE`.
 
-![Spot plot](vignettes/fig7.jpg)  
+![Spot plot 24](vignettes/fig7.jpg)  
 __Fig 8.__ *Layout of the plate with well numbers showing spots in each well.*  
 
-![Spot plot](vignettes/fig8.jpg)  
+![Spot plot 48](vignettes/fig8.jpg)  
 __Fig 9.__ *Spot plot for a 48-well plate.*  
 
 The minimum spanning distance (msd) is computed if `msd=TRUE`. A plot showing mst lines is exported when `exportplot=TRUE`.  
@@ -132,7 +132,7 @@ __Fig 12.__ *Plate layout showing the maximum area (convex hull) covered by larv
 The tracks as lines are plotted if `exportplot=TRUE`. If `exportdata=TRUE`, then the spots, tracks and all raw data is exported as a tab-delimited text file.  
 
 ![Tracks plot](vignettes/fig12.jpg)  
-__Fig 13.__ *Layout of the plate with well numbers showing tracks in each well. The track length in pixels is shown below each track. The tracks are also coloured by track length.*  
+__Fig 13.__ *Layout of the plate with well numbers showing tracks in each well. The track length in pixels is shown below each track. The track segments are coloured by linktype. Green denotes single point link, blue denotes duplicated link and red denotes nearest link.*  
 
 The total distance for each track is plotted and exported when `exportplot=TRUE`.
 
@@ -156,6 +156,9 @@ For the area covered by larval activity taking into account holes and gaps in sp
 
 __Minimum spanning distance__  
 For a measure of minimum distance covered by the larvae, the msd is calculated as the total distance in the minimum spanning tree. The mst is calculated using the function `dino.mst()` from package `fossil`.  
+
+__Activity__  
+The larval activity is a measure of distance moved by the larvae at every second during the duration monitored. A threshold distance, for ex; 5mm, is defined and if the larvae moves more than 5mm in 1 sec, that sec is set as active. The number of active seconds for the whole duration is divided by the number of total seconds. The activity value can be thought of as the proportion or percentage (when x100) of active seconds.  
 
 __Frame linking__  
 Each spot on frame 1 is assigned an id. Then, each spot is connected from one frame to the next frame. A spot is selected and the algorithm searches for a spot in the next frame in the same well using one of three approaches: *single*, *nearest* or *duplicated*. If a single spot was identified in the next frame (in same well), then *single* is assigned to the point. If more than one point was found in the next frame (same well), then the nearest point is selected and assigned *nearest*. If no point was found in the next frame (same well), then the previous point is duplicated. Once a spot is defined in the next frame, the same id is assigned to that spot. This is iterated to the end of all frames.  

@@ -90,7 +90,7 @@
 #' @import fossil
 #' @export
 #'
-ltrack <- function(files = NULL, wells = 24, markededges = TRUE, fps = 25, mm = 5.4, activitydist = 27,
+ltrack <- function(files = NULL, wells = 24, markededges = TRUE, fps = 25, mm = 5.4, activitydist = 5,
                    coverage = TRUE,msd = TRUE, alphahull = TRUE, alphavalue = 4,
                    filenamediscard = ".txt", exportdata = TRUE, exportplot = TRUE,
                    follow = "none", centerwell = FALSE)
