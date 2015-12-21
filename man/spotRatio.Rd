@@ -35,7 +35,7 @@ If \code{exportdata=TRUE}, the dataframe is export as a text file in the working
 Counts spots in the center vs edges of the wells and computes a ratio.
 }
 \details{
-Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 \strong{files}\cr
 A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 The input files must be tab-delimited decimal as dot (.) text files. The file

@@ -29,7 +29,7 @@ Returns Nothing for now. If \code{exportplot=T}, a figure with plotted with spot
 Computes 2D kernal density of xy spot data.
 }
 \details{
-Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 \strong{files}\cr
 A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 The input files must be tab-delimited decimal as dot (.) text files. The file

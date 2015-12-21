@@ -30,7 +30,7 @@ If \code{exportdata=TRUE}, the dataframe is export as a text file in the working
 Computes coverage (convex hull) of xy spot data.
 }
 \details{
-Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 \strong{files}\cr
 A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 The input files must be tab-delimited decimal as dot (.) text files. The file

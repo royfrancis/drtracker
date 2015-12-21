@@ -67,8 +67,8 @@ number of pixels in one mm (mm). If \code{coverage=TRUE}, then coverage is added
 alphahull area is added in pxsq and mmsq. If \code{spotratio=TRUE}, then outer spots, inner spots and spots ratio is added.
 If \code{msd=TRUE}, then msd_px and msd_mm are added.
 If more than one file was selected, a Combined-Features file is also exported.
-If \code{exportplot = T}, then 3-7 figures are exported: EdgeMarks (if edge marks are used),
-wells & spots, wells & tracks, coverage, msd, alphahull and distance.
+If \code{exportplot = T}, then 8 figures are exported: EdgeMarks,
+AssignedWells, Tracks, spotCoverage, spotMsd, spotAlphahull, spotDensity and spotRatio.
 }
 \description{
 Tracks single larvae in 24 or 48 well assay plates from xy spot data
@@ -90,12 +90,12 @@ Computed from convex hull of points. The polygon area is computed based on the
 function \code{polyarea} from package \code{pracma}.\cr
 \strong{msd}\cr
 The minimum spanning distance based on the minimum spanning network of point cloud.
-Computed using \code{spantree} from package \code{vegan}. Very slow. Set to FALSE by default.
+Computed using \code{spantree} from package \code{vegan}. Very slow. Set to FALSE by default.\cr
 \strong{alphahull}\cr
 The alphahull of point cloud based on the alphavalue. The function \code{ahull} from
-package \code{alphahull}. Smaller alphavalue produces more gaps in spot cloud.
+package \code{alphahull}. Smaller alphavalue produces more gaps in spot cloud.\cr
 \strong{spotdensity}\cr
-Computes 2D kernal density of spots and generates an image file.
+Computes 2D kernal density of spots and generates an image file.\cr
 \strong{spotratio}\cr
 Spots in the periphery of the well and spots in the centre of the well are computed. A ratio is computed.
 \strong{filenamediscard}\cr

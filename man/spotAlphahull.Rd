@@ -33,14 +33,15 @@ If \code{exportdata=TRUE}, the dataframe is export as a text file in the working
 Computes alphahull (concave hull) of xy spot data.
 }
 \details{
-Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 \strong{files}\cr
 A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 The input files must be tab-delimited decimal as dot (.) text files. The file
 must contain a minimum of 3 columns named x, y and well. x is a numeric
 indicating x coordinate and y is a numeric indicating y coordinate of each spot. well indicates well for each spot.
 Any extra columns are not used. Use output from \code{linkFrames()}.\cr
-A text file with edge marks (filename-EdgeMarks.txt) must be present in the working directory for plotting. The edge marks file is exported by function \code{assignWells()}.
+A text file with edge marks (filename-EdgeMarks.txt) must be present in the working directory for plotting. 
+The edge marks file is exported by function \code{assignWells()}.\cr
 \strong{alphavalue}\cr
 A default value of 4 is used. Smaller values produce more gaps in the spot cloud.
 }

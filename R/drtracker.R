@@ -71,8 +71,8 @@ rm(pkgs)
 #' alphahull area is added in pxsq and mmsq. If \code{spotratio=TRUE}, then outer spots, inner spots and spots ratio is added.
 #' If \code{msd=TRUE}, then msd_px and msd_mm are added.
 #' If more than one file was selected, a Combined-Features file is also exported.
-#' If \code{exportplot = T}, then 3-7 figures are exported: EdgeMarks (if edge marks are used),
-#' wells & spots, wells & tracks, coverage, msd, alphahull and distance.
+#' If \code{exportplot = T}, then 8 figures are exported: EdgeMarks,
+#' AssignedWells, Tracks, spotCoverage, spotMsd, spotAlphahull, spotDensity and spotRatio.
 #' @details
 #' The quality of tracks almost completely depends on the image thresholding and subsequent xy data.\cr
 #' \strong{files}\cr
@@ -89,12 +89,12 @@ rm(pkgs)
 #' function \code{polyarea} from package \code{pracma}.\cr
 #' \strong{msd}\cr
 #' The minimum spanning distance based on the minimum spanning network of point cloud.
-#' Computed using \code{spantree} from package \code{vegan}. Very slow. Set to FALSE by default.
+#' Computed using \code{spantree} from package \code{vegan}. Very slow. Set to FALSE by default.\cr
 #' \strong{alphahull}\cr
 #' The alphahull of point cloud based on the alphavalue. The function \code{ahull} from
-#' package \code{alphahull}. Smaller alphavalue produces more gaps in spot cloud.
+#' package \code{alphahull}. Smaller alphavalue produces more gaps in spot cloud.\cr
 #' \strong{spotdensity}\cr
-#' Computes 2D kernal density of spots and generates an image file.
+#' Computes 2D kernal density of spots and generates an image file.\cr
 #' \strong{spotratio}\cr
 #' Spots in the periphery of the well and spots in the centre of the well are computed. A ratio is computed.
 #' \strong{filenamediscard}\cr
@@ -1024,7 +1024,7 @@ gridWells <- function(dframe = NULL, wells = NULL)
 #' @return Returns a dataframe with columns: row, plate names, wells, coverage (convex hull area) in  pixel square and millimetre square.
 #' If \code{exportdata=TRUE}, the dataframe is export as a text file in the working directory for each input file.
 #' @details
-#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 #' \strong{files}\cr
 #' A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 #' The input files must be tab-delimited decimal as dot (.) text files. The file
@@ -1201,14 +1201,15 @@ spotCoverage <- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt"
 #' @return Returns a dataframe with columns: row, plate names, wells, alphahull (concave hull area) in  pixel square and millimetre square.
 #' If \code{exportdata=TRUE}, the dataframe is export as a text file in the working directory for each input file.
 #' @details
-#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 #' \strong{files}\cr
 #' A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 #' The input files must be tab-delimited decimal as dot (.) text files. The file
 #' must contain a minimum of 3 columns named x, y and well. x is a numeric
 #' indicating x coordinate and y is a numeric indicating y coordinate of each spot. well indicates well for each spot.
 #' Any extra columns are not used. Use output from \code{linkFrames()}.\cr
-#' A text file with edge marks (filename-EdgeMarks.txt) must be present in the working directory for plotting. The edge marks file is exported by function \code{assignWells()}.
+#' A text file with edge marks (filename-EdgeMarks.txt) must be present in the working directory for plotting. 
+#' The edge marks file is exported by function \code{assignWells()}.\cr
 #' \strong{alphavalue}\cr
 #' A default value of 4 is used. Smaller values produce more gaps in the spot cloud.
 #' @export
@@ -1366,7 +1367,7 @@ spotAlphahull <- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt
 #' @return Returns a dataframe with columns: row, plate names, wells, msd in  pixels and millimetre.
 #' If \code{exportdata=TRUE}, the dataframe is export as a text file in the working directory for each input file.
 #' @details
-#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 #' \strong{files}\cr
 #' A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 #' The input files must be tab-delimited decimal as dot (.) text files. The file
@@ -1520,7 +1521,7 @@ spotMsd <- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt", mm 
 #' @param quiet A logical indicating if messages should be printed to console during the run. If \code{FALSE}, all output to console is killed except progress bar.
 #' @return Returns Nothing for now. If \code{exportplot=T}, a figure with plotted with spot densities.
 #' @details
-#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 #' \strong{files}\cr
 #' A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 #' The input files must be tab-delimited decimal as dot (.) text files. The file
@@ -1666,7 +1667,7 @@ spotDensity <- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt",
 #' @return Returns a dataframe with columns: row, plate names, wells, number of outer spots, inner spots and spots ratio.
 #' If \code{exportdata=TRUE}, the dataframe is export as a text file in the working directory for each input file.
 #' @details
-#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.
+#' Note that the 'xx-EdgeMarks.txt' file must be present in the working directory for the plot exports to work.\cr
 #' \strong{files}\cr
 #' A character or vector of paths to files. On windows, use \code{choose.files()} for interactive selection.
 #' The input files must be tab-delimited decimal as dot (.) text files. The file
