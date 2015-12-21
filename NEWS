@@ -1,6 +1,6 @@
 drtracker 1.1.0
 ===========
-* 16-Dec-2015
+* 21-Dec-2015
 * Large function split into smaller functions
 * assignWells() to assign spots to wells and generate edgemarks file
 * linkFrames() to link spots frame to frame and generate tracks file
@@ -10,6 +10,7 @@ drtracker 1.1.0
 * spotMsd() to compute minimum spanning distance from tracks file
 * spotRatio() to compute center-edge presence from tracks file
 * gridWells() to compute plate/well coordinates.
+* Updated ReadMe
 
 drtracker 1.0.5
 ===========

@@ -8,6 +8,7 @@ ltrack(files = NULL, wells = 24, markededges = TRUE, fps = 25,
   mm = 5.4, framelinking = TRUE, follow = "none", trackfeatures = TRUE,
   activitydist = 5, spotcoverage = TRUE, spotalphahull = TRUE,
   alphavalue = 4, spotdensity = TRUE, spotmsd = FALSE, spotratio = TRUE,
+  outercircleradius = 8.1, innercircleradius = 4.8,
   filenamediscard = ".txt", exportdata = TRUE, exportplot = TRUE,
   useexisting = FALSE)
 }
@@ -41,6 +42,10 @@ ltrack(files = NULL, wells = 24, markededges = TRUE, fps = 25,
 \item{spotmsd}{A logical indicating if the minimum spanning distance should be computed. See details.}
 
 \item{spotratio}{A logical indicating if spotratio should be computed. See details.}
+
+\item{outercircleradius}{A numeric indicating radius of outer circle (radius of one well) in mm.}
+
+\item{innercircleradius}{A numeric indicating radius of inner circle in mm.}
 
 \item{filenamediscard}{A character for part of the filename to be removed.}
 

@@ -5,7 +5,8 @@
 \title{Computes larval presence in center vs edges of the wells.}
 \usage{
 spotRatio(files = NA, wells = 24, filenamediscard = "-Tracks.txt",
-  mm = 5.4, exportdata = TRUE, exportplot = TRUE, quiet = FALSE)
+  mm = 5.4, outercircleradius = 8.1, innercircleradius = 4.8,
+  exportdata = TRUE, exportplot = TRUE, quiet = FALSE)
 }
 \arguments{
 \item{files}{A character or vector of paths or filenames. See details.}
@@ -15,6 +16,10 @@ spotRatio(files = NA, wells = 24, filenamediscard = "-Tracks.txt",
 \item{filenamediscard}{A character for part of the filename to be removed. '-Tracks.txt' is removed by default.}
 
 \item{mm}{A numeric indicating number of pixels in 1 mm.}
+
+\item{outercircleradius}{A numeric indicating radius of outer circle (radius of one well) in mm.}
+
+\item{innercircleradius}{A numeric indicating radius of inner circle in mm.}
 
 \item{exportdata}{A logical indicating if data table must be exported as a text file to the working directory.}
 

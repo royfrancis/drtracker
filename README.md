@@ -30,6 +30,7 @@ __Fig 1.__ *An overview of the workflow. Larvae are detected in images to produc
 Use a 24 or 48 well plate. Use single larva per well in clean water with minimal colour. Lighting must not induce strong reflection on plates. Use matte white plates if possible. Videos with 500 frames or more work better to remove background. Note the framerate of the video in fps (frames per second). Calibrate the size in the video to determine 1 pixel = ? mm.
 
 Detection is carried out in ImageJ.  
+
 1. The video must be imported into Fiji ImageJ. If the video is not in .avi format, convert to uncompressed .avi using a tool such as VirtualDub.   
 2. Save the video as a .tif sequence and/or continue to next step.  
 
@@ -37,6 +38,7 @@ Detection is carried out in ImageJ.
 __Fig 2.__ *View of a typical 24 well plate with few day old single zebrafish larvae in each well.*  
 
 3. Mark the edges of plate (4 spots) and larvae positions on frame 1. Set the brush size to something like size 8-10 black colour. If the well/wells are empty, do not mark anything. When marking the 4 edge spots, imagine connecting the 4 spots to create a rectangle. No larval position must touch that rectangle. If they do, then mark the edges further out.     
+
 ![Marked plate](vignettes/fig2.jpg)  
 __Fig 3.__ *View of a plate with marking in the first frame. The edges of the wells and the positions of larvae are marked in frame 1.*  
 
@@ -44,7 +46,7 @@ __Fig 3.__ *View of a plate with marking in the first frame. The edges of the we
 
 ![Z stack plate](vignettes/fig3.jpg)  
 __Fig 4.__ *Blank plate after Average Z stack. Works best when larvae moves around a lot and number of frames are at least few hundred.*  
-
+  
 ![Larvae without plate](vignettes/fig4.jpg)  
 __Fig 5.__ *Larval positions without the plate after Image Difference.*  
 

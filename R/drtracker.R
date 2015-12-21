@@ -53,6 +53,8 @@ rm(pkgs)
 #' @param spotdensity A logical indicating if 2D kernal density is to be estimated. See details.
 #' @param spotmsd A logical indicating if the minimum spanning distance should be computed. See details.
 #' @param spotratio A logical indicating if spotratio should be computed. See details.
+#' @param outercircleradius A numeric indicating radius of outer circle (radius of one well) in mm.
+#' @param innercircleradius A numeric indicating radius of inner circle in mm.
 #' @param filenamediscard A character for part of the filename to be removed.
 #' @param exportdata A logical indicating if data tables must be exported to working directory.
 #' @param exportplot A logical if results must be plotted and exported to working directory.
@@ -116,7 +118,7 @@ ltrack <- function(files = NULL, wells = 24, markededges = TRUE, fps = 25, mm = 
                    spotalphahull = TRUE, alphavalue = 4,
                    spotdensity = TRUE,
                    spotmsd = FALSE,
-                   spotratio = TRUE,
+                   spotratio = TRUE, outercircleradius = 8.1, innercircleradius = 4.8,
                    filenamediscard = ".txt", exportdata = TRUE, exportplot = TRUE,
                    useexisting = FALSE)
 {
@@ -255,6 +257,7 @@ ltrack <- function(files = NULL, wells = 24, markededges = TRUE, fps = 25, mm = 
     {
       cat(paste0("Computing spot ratio...\n"))
       ff <- spotRatio(files = paste0(fnames[fileloop],"-Tracks.txt"), wells = wells, mm = mm,
+                      outercircleradius = outercircleradius, innercircleradius = innercircleradius,
                        exportdata = exportdata, exportplot = exportplot, quiet = TRUE)
       dfa <- cbind(dfa,ff[,-c(1:3)])
     }
@@ -1655,6 +1658,8 @@ spotDensity <- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt",
 #' @param wells A numeric indicating plate format. Either 24 or 48.
 #' @param filenamediscard A character for part of the filename to be removed. '-Tracks.txt' is removed by default.
 #' @param mm A numeric indicating number of pixels in 1 mm.
+#' @param outercircleradius A numeric indicating radius of outer circle (radius of one well) in mm.
+#' @param innercircleradius A numeric indicating radius of inner circle in mm.
 #' @param exportdata A logical indicating if data table must be exported as a text file to the working directory.
 #' @param exportplot A logical if results must be plotted as a figure and exported to working directory.
 #' @param quiet A logical indicating if messages should be printed to console during the run. If \code{FALSE}, all output to console is killed except progress bar.
@@ -1673,6 +1678,7 @@ spotDensity <- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt",
 #' @import SDMTools
 #'
 spotRatio<- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt", mm = 5.4,
+                     outercircleradius = 8.1, innercircleradius = 4.8,
                      exportdata = TRUE, exportplot = TRUE, quiet = FALSE)
 {
   if(!quiet) currtime <- Sys.time()
@@ -1702,6 +1708,7 @@ spotRatio<- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt", mm
   if(!is.logical(exportdata)) stop("Argument 'exportdata' not set correctly. Set as TRUE or FALSE.\n")
   if(!is.logical(exportplot)) stop("Argument 'exportplot' not set correctly. Set as TRUE or FALSE.\n")
   if(!is.logical(quiet)) stop("Argument 'quiet' not set correctly. Set as TRUE or FALSE.\n")
+  if(outercircleradius > 10 | innercircleradius > 6) warning("Arguments 'outercircleradius' or 'innercircleradius' may be set incorrectly.\n")
 
   #looping over selected files
   fnames <- sub(filenamediscard,"",basename(files))
@@ -1737,8 +1744,8 @@ spotRatio<- function(files = NA, wells = 24, filenamediscard = "-Tracks.txt", mm
         if(nrow(bswell) > 2)
         {
           #calculate circle polygon for well
-          outercircle <- circlepos(wellsdf$x[bsloop],wellsdf$y[bsloop],radius = 44)
-          innercircle <- circlepos(wellsdf$x[bsloop],wellsdf$y[bsloop],radius = 26)
+          outercircle <- circlepos(wellsdf$x[bsloop],wellsdf$y[bsloop],radius = round(outercircleradius*mm,1))
+          innercircle <- circlepos(wellsdf$x[bsloop],wellsdf$y[bsloop],radius = round(innercircleradius*mm,1))
           #num of points in large circle
           outerpoints <- SDMTools::pnt.in.poly(bswell,outercircle)
           outerpoints <- subset(outerpoints, outerpoints$pip == 1)
